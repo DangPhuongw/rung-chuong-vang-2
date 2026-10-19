@@ -1,0 +1,43 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String
+  role         String    @default("EDITOR") // "ADMIN", "EDITOR", "PLAYER"
+  quizzes      QuizSet[]
+  createdAt    DateTime  @default(now())
+}
+
+model QuizSet {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  thumbnail   String?
+  status      String     @default("PENDING") // "DRAFT", "PENDING", "APPROVED", "REJECTED"
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  quizSetId     String
+  quizSet       QuizSet  @relation(fields: [quizSetId], references: [id], onDelete: Cascade)
+  category      String   @default("MAIN") // "MAIN", "TIE_BREAK"
+  content       String
+  options       String   // JSON string array: '["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"]'
+  correctIndex  Int      // 0, 1, 2, 3
+  timeLimit     Int      @default(15)
+  orderIndex    Int
+}
