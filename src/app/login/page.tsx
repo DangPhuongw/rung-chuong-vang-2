@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Shield, Sparkles, LogIn, UserPlus, ArrowLeft, Loader2, KeyRound } from 'lucide-react';
+import { Shield, Sparkles, Bell, Crown, PenTool, ArrowLeft, Loader2, KeyRound, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -85,23 +85,27 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl glass-panel-glow p-8 relative border-indigo-500/30">
+      <div className="w-full max-w-md soft-card-elevated p-8 relative">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-muted hover:text-ink transition-colors mb-6 group"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           <span>Về trang chủ</span>
         </Link>
 
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-indigo-500/20">
-            {isRegisterMode ? <UserPlus className="w-6 h-6 text-white" /> : <LogIn className="w-6 h-6 text-white" />}
+          <div className="w-16 h-16 rounded-full bg-paper-2 border border-rule flex items-center justify-center mx-auto mb-3 shadow-sm text-accent-deep">
+            {isRegisterMode ? (
+              <Sparkles className="w-8 h-8 text-accent-deep" />
+            ) : (
+              <Bell className="w-8 h-8 fill-accent text-accent-deep" />
+            )}
           </div>
-          <h1 className="text-2xl font-black text-white">
+          <h1 className="text-2xl font-extrabold text-ink tracking-tight">
             {isRegisterMode ? 'Đăng Ký Tài Khoản Editor' : 'Đăng Nhập Quản Trị'}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs font-medium text-muted mt-1">
             {isRegisterMode
               ? 'Tạo tài khoản để thiết kế và quản lý các bộ câu hỏi'
               : 'Dành cho Editor tạo đề thi và Admin duyệt nội dung'}
@@ -109,43 +113,50 @@ export default function LoginPage() {
         </div>
 
         {/* Demo Quick Logins */}
-        <div className="mb-6 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-            <span>Tài khoản Demo (1-Click Test)</span>
+        <div className="mb-6 p-4 rounded-2xl bg-paper-2 border border-rule">
+          <p className="text-[11px] font-bold text-accent-deep mb-2.5 flex items-center gap-1.5">
+            <KeyRound className="w-3.5 h-3.5 text-accent-deep" />
+            <span>Tài khoản Demo (1-Click Thử Nghiệm)</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               disabled={loading}
               onClick={() => handleQuickLogin('admin@quiz.com')}
-              className="py-2 px-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all text-left"
+              className="py-2.5 px-3 rounded-full bg-card hover:bg-paper-3 border border-rule text-accent-deep text-xs font-bold transition-colors text-left shadow-sm flex items-center gap-2"
             >
-              👑 Admin Demo
-              <span className="block text-[10px] font-normal text-amber-400/70">admin@quiz.com</span>
+              <Crown className="w-4 h-4 text-accent-deep flex-shrink-0" />
+              <div>
+                <span className="block leading-tight">Admin Demo</span>
+                <span className="block text-[10px] font-medium text-muted">admin@quiz.com</span>
+              </div>
             </button>
             <button
               type="button"
               disabled={loading}
               onClick={() => handleQuickLogin('editor@quiz.com')}
-              className="py-2 px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold transition-all text-left"
+              className="py-2.5 px-3 rounded-full bg-card hover:bg-paper-3 border border-rule text-ink text-xs font-bold transition-colors text-left shadow-sm flex items-center gap-2"
             >
-              ✍️ Editor Demo
-              <span className="block text-[10px] font-normal text-indigo-400/70">editor@quiz.com</span>
+              <PenTool className="w-4 h-4 text-muted flex-shrink-0" />
+              <div>
+                <span className="block leading-tight">Editor Demo</span>
+                <span className="block text-[10px] font-medium text-muted">editor@quiz.com</span>
+              </div>
             </button>
           </div>
         </div>
 
         {error && (
-          <div className="mb-5 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium">
-            {error}
+          <div className="mb-5 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegisterMode && (
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-ink mb-1.5">
                 Tên hiển thị / Username
               </label>
               <input
@@ -153,14 +164,14 @@ export default function LoginPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Ví dụ: ThayGiaoToan, MasterQuiz..."
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Ví dụ: ThayGiaoToan, MasterQuiz…"
+                className="w-full px-4 py-2.5 rounded-full bg-card border border-rule text-ink placeholder:text-muted text-sm font-semibold focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors shadow-sm"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-ink mb-1.5">
               Địa chỉ Email
             </label>
             <input
@@ -169,12 +180,12 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-2.5 rounded-full bg-card border border-rule text-ink placeholder:text-muted text-sm font-semibold focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors shadow-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-ink mb-1.5">
               Mật khẩu
             </label>
             <input
@@ -183,29 +194,29 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Tối thiểu 6 ký tự"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-2.5 rounded-full bg-card border border-rule text-ink placeholder:text-muted text-sm font-semibold focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors shadow-sm"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+            className="pill-btn-primary w-full py-3.5 text-sm font-bold text-accent-ink"
           >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Đang xử lý...</span>
+                <span>Đang xử lý…</span>
               </>
             ) : isRegisterMode ? (
               <span>Đăng Ký Ngay</span>
             ) : (
-              <span>Đăng Nhập</span>
+              <span>Đăng Nhập Vào Hệ Thống</span>
             )}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-slate-400">
+        <div className="mt-6 text-center text-xs font-semibold text-muted">
           {isRegisterMode ? (
             <p>
               Đã có tài khoản?{' '}
@@ -215,7 +226,7 @@ export default function LoginPage() {
                   setIsRegisterMode(false);
                   setError('');
                 }}
-                className="text-indigo-400 hover:text-indigo-300 font-bold underline ml-1"
+                className="text-accent-deep hover:underline font-bold ml-1"
               >
                 Đăng nhập
               </button>
@@ -229,7 +240,7 @@ export default function LoginPage() {
                   setIsRegisterMode(true);
                   setError('');
                 }}
-                className="text-indigo-400 hover:text-indigo-300 font-bold underline ml-1"
+                className="text-accent-deep hover:underline font-bold ml-1"
               >
                 Đăng ký Editor mới
               </button>

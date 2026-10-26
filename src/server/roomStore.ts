@@ -1,5 +1,54 @@
 import { Room, PublicRoomState, PublicPlayer, Player, QuestionData } from '../types/game';
 
+const AVATARS = [
+  'char_burger',
+  'char_unicorn',
+  'char_dino',
+  'char_cat',
+  'char_robot',
+  'char_fox',
+  'char_panda',
+  'char_owl',
+  'char_alien',
+  'char_bear',
+];
+
+export function getRandomAvatar(): string {
+  return AVATARS[Math.floor(Math.random() * AVATARS.length)];
+}
+
+const BOT_NAMES = [
+  'Bot Alpha 🤖',
+  'Bot Trí Tuệ 🧠',
+  'Bot Siêu Tốc ⚡',
+  'Bot Cú Vọ 🦉',
+  'Bot Khủng Long 🦖',
+  'Bot Mèo Con 🐱',
+  'Bot Tinh Anh ⭐',
+  'Bot Giáo Sư 🎓',
+  'Bot Bách Khoa 📚',
+  'Bot Hạt Nhân ⚛️',
+  'Bot Gấu Bự 🐻',
+  'Bot Vô Địch 🏆',
+  'Bot Bất Bại 🛡️',
+  'Bot Cao Thủ 🎯',
+  'Bot Tương Lai 🚀',
+  'Bot Thần Đồng ✨',
+  'Bot Chiến Thần ⚔️',
+  'Bot Sao Băng 🌠',
+  'Bot Tia Chớp ⚡',
+  'Bot Bất Tử 💎',
+];
+
+function getRandomBotName(room: Room): string {
+  const existingNames = new Set(Array.from(room.players.values()).map((p) => p.nickname));
+  const available = BOT_NAMES.filter((name) => !existingNames.has(name));
+  if (available.length > 0) {
+    return available[Math.floor(Math.random() * available.length)];
+  }
+  return `Bot #${room.players.size + 1} 🤖`;
+}
+
 class RoomStore {
   private rooms: Map<string, Room> = new Map();
 
@@ -65,6 +114,68 @@ class RoomStore {
     return undefined;
   }
 
+  addBots(room: Room, count: number = 1): number {
+    if (room.state !== 'LOBBY') return 0;
+    const num = Math.min(Math.max(1, count), 20);
+    let added = 0;
+    for (let i = 0; i < num; i++) {
+      if (room.players.size >= 300) break;
+      const botId = 'bot_' + Math.random().toString(36).substring(2, 9);
+      const botName = getRandomBotName(room);
+      const botPlayer: Player = {
+        playerToken: botId,
+        socketId: botId,
+        nickname: botName,
+        avatar: getRandomAvatar(),
+        isHost: false,
+        isBot: true,
+        lives: 3,
+        status: 'ALIVE',
+        score: 0,
+        currentAnswerIndex: null,
+        answerTimeMs: null,
+        eliminatedAtRound: null,
+      };
+      room.players.set(botId, botPlayer);
+      added++;
+    }
+    return added;
+  }
+
+  removeBot(room: Room, botToken: string): boolean {
+    if (room.state !== 'LOBBY') return false;
+    const bot = room.players.get(botToken);
+    if (bot && bot.isBot) {
+      return room.players.delete(botToken);
+    }
+    return false;
+  }
+
+  clearBots(room: Room): void {
+    if (room.state !== 'LOBBY') return;
+    for (const [token, p] of room.players.entries()) {
+      if (p.isBot) {
+        room.players.delete(token);
+      }
+    }
+  }
+
+  updatePlayerProfile(
+    room: Room,
+    playerToken: string,
+    data: { nickname?: string; avatar?: string }
+  ): boolean {
+    const player = room.players.get(playerToken);
+    if (!player) return false;
+    if (data.nickname && data.nickname.trim()) {
+      player.nickname = data.nickname.trim().slice(0, 24);
+    }
+    if (data.avatar) {
+      player.avatar = data.avatar;
+    }
+    return true;
+  }
+
   toPublicPlayer(player: Player): PublicPlayer {
     return {
       playerToken: player.playerToken,
@@ -76,6 +187,7 @@ class RoomStore {
       score: player.score,
       hasAnswered: player.currentAnswerIndex !== null,
       eliminatedAtRound: player.eliminatedAtRound,
+      isBot: player.isBot || false,
     };
   }
 

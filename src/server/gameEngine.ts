@@ -15,20 +15,61 @@ export function getTieBreakMessage(reason: string): string {
   }
 }
 
+function clearBotTimers(room: Room): void {
+  if (room.botTimers && room.botTimers.length > 0) {
+    room.botTimers.forEach((t) => clearTimeout(t));
+    room.botTimers = [];
+  }
+}
+
+function scheduleBotAnswers(room: Room, question: QuestionData, io: Server): void {
+  clearBotTimers(room);
+  room.botTimers = [];
+
+  const aliveBots = Array.from(room.players.values()).filter(
+    (p) => p.isBot && p.status === 'ALIVE'
+  );
+
+  if (aliveBots.length === 0) return;
+
+  for (const bot of aliveBots) {
+    // Random delay between 1.5s and Math.min(question.timeLimit - 1.5, 7.0)s
+    const maxDelaySec = Math.max(2.5, Math.min(question.timeLimit - 1.5, 7.0));
+    const delayMs = Math.floor(1500 + Math.random() * (maxDelaySec * 1000 - 1500));
+
+    // Bot accuracy: ~70% correct, ~30% incorrect so bots lose lives across rounds
+    const isCorrect = Math.random() < 0.7;
+    let chosenAnswer = question.correctIndex;
+    if (!isCorrect) {
+      const wrongIndices = [0, 1, 2, 3].filter((i) => i !== question.correctIndex);
+      chosenAnswer = wrongIndices[Math.floor(Math.random() * wrongIndices.length)];
+    }
+
+    const timer = setTimeout(() => {
+      if (room.state === 'QUESTION_ACTIVE' && room.currentQuestion?.id === question.id) {
+        submitAnswer(room, bot.playerToken, chosenAnswer, io);
+      }
+    }, delayMs);
+
+    room.botTimers.push(timer);
+  }
+}
+
 export function startGame(room: Room, io: Server): { success: boolean; error?: string } {
-  if (room.players.size < 2) {
-    return { success: false, error: 'Cần tối thiểu 2 người chơi để bắt đầu trận đấu!' };
+  if (room.players.size < 1) {
+    return { success: false, error: 'Cần ít nhất 1 người chơi để bắt đầu trận đấu!' };
   }
 
   if (room.state !== 'LOBBY' && room.state !== 'GAME_OVER') {
     return { success: false, error: 'Phòng đang trong trận đấu!' };
   }
 
-  // Clear previous timer
+  // Clear previous timer & bot timers
   if (room.timerInterval) {
     clearTimeout(room.timerInterval);
     room.timerInterval = null;
   }
+  clearBotTimers(room);
 
   room.initialPlayerCount = room.players.size;
   room.roundNumber = 0;
@@ -104,6 +145,9 @@ export function startQuestion(room: Room, io: Server): void {
   room.timerInterval = setTimeout(() => {
     evaluateRound(room, io);
   }, question.timeLimit * 1000);
+
+  // Auto schedule answers for alive test bots
+  scheduleBotAnswers(room, question, io);
 }
 
 export function submitAnswer(
@@ -148,6 +192,7 @@ export function evaluateRound(room: Room, io: Server): void {
     clearTimeout(room.timerInterval);
     room.timerInterval = null;
   }
+  clearBotTimers(room);
 
   const currentQ = room.currentQuestion;
   if (!currentQ) return;
@@ -201,7 +246,7 @@ export function evaluateRound(room: Room, io: Server): void {
   const currentAlive = Array.from(room.players.values()).filter((p) => p.status === 'ALIVE');
 
   // STEP 3: Check Single Winner
-  if (currentAlive.length === 1) {
+  if (currentAlive.length === 1 && room.initialPlayerCount > 1) {
     room.winner = currentAlive[0];
     room.state = 'ROUND_RESULT';
     io.to(room.roomId).emit('round_result', {
@@ -352,6 +397,7 @@ export function resetRoom(room: Room, playerToken: string, io: Server): boolean 
     clearTimeout(room.timerInterval);
     room.timerInterval = null;
   }
+  clearBotTimers(room);
 
   room.state = 'LOBBY';
   room.roundNumber = 0;

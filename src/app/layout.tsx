@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import ClientInit from '@/components/ClientInit';
 
 export const metadata: Metadata = {
@@ -14,14 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className="dark">
-      <body className="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+    <html lang="vi" className="light">
+      <body className="bg-paper text-ink min-h-screen flex flex-col antialiased selection:bg-accent selection:text-ink">
         <ClientInit />
         <Navbar />
         <main className="flex-1 w-full">{children}</main>
-        <footer className="border-t border-slate-900 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
-          <p>© 2026 Đấu Trường Sinh Tồn Trí Tuệ (Quiz Battle Royale). All rights reserved.</p>
-        </footer>
+        <Footer />
       </body>
     </html>
   );

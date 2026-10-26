@@ -1,27 +1,14 @@
 import { Server, Socket } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
-import { roomStore } from './roomStore';
+import { roomStore, getRandomAvatar } from './roomStore';
 import { startGame, submitAnswer, resetRoom } from './gameEngine';
 import { Player, QuestionData } from '../types/game';
 
 const prisma = new PrismaClient();
 
 function generateRoomId(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
-const AVATARS = [
-  '🦊', '🦁', '🐯', '🐼', '🐨', '🐸', '🐙', '🦄',
-  '🦅', '🐺', '🦉', '🐲', '⚡', '🔥', '🚀', '💎'
-];
-
-function getRandomAvatar(): string {
-  return AVATARS[Math.floor(Math.random() * AVATARS.length)];
+  // Generate 6-digit PIN like Quizizz / Kahoot (e.g. 791541)
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 export function setupSocketHandlers(io: Server): void {
@@ -30,11 +17,11 @@ export function setupSocketHandlers(io: Server): void {
     socket.on(
       'create_room',
       async (
-        data: { quizSetId: string; nickname: string; playerToken: string },
+        data: { quizSetId: string; nickname: string; playerToken: string; avatar?: string },
         callback: (res: { success: boolean; roomId?: string; error?: string }) => void
       ) => {
         try {
-          const { quizSetId, nickname, playerToken } = data;
+          const { quizSetId, nickname, playerToken, avatar } = data;
           if (!quizSetId || !nickname || !playerToken) {
             return callback({ success: false, error: 'Thiếu thông tin tạo phòng!' });
           }
@@ -55,7 +42,8 @@ export function setupSocketHandlers(io: Server): void {
           for (const q of quizSet.questions) {
             let options: string[] = [];
             try {
-              options = JSON.parse(q.options);
+              const parsed = JSON.parse(q.options);
+              options = Array.isArray(parsed) ? parsed : (parsed.options || ['A', 'B', 'C', 'D']);
             } catch {
               options = ['A', 'B', 'C', 'D'];
             }
@@ -93,7 +81,7 @@ export function setupSocketHandlers(io: Server): void {
             playerToken,
             socketId: socket.id,
             nickname: nickname.trim(),
-            avatar: getRandomAvatar(),
+            avatar: avatar || getRandomAvatar(),
             isHost: true,
             lives: 3,
             status: 'ALIVE',
@@ -127,11 +115,11 @@ export function setupSocketHandlers(io: Server): void {
     socket.on(
       'join_room',
       (
-        data: { roomId: string; nickname: string; playerToken: string },
+        data: { roomId: string; nickname: string; playerToken: string; avatar?: string },
         callback: (res: { success: boolean; roomState?: any; error?: string }) => void
       ) => {
         try {
-          const { roomId, nickname, playerToken } = data;
+          const { roomId, nickname, playerToken, avatar } = data;
           if (!roomId || !playerToken) {
             return callback({ success: false, error: 'Thiếu thông tin vào phòng!' });
           }
@@ -151,6 +139,9 @@ export function setupSocketHandlers(io: Server): void {
             if (nickname && nickname.trim()) {
               player.nickname = nickname.trim();
             }
+            if (avatar) {
+              player.avatar = avatar;
+            }
           } else {
             // New participant
             const cleanNick = (nickname || 'Chiến binh').trim();
@@ -160,7 +151,7 @@ export function setupSocketHandlers(io: Server): void {
               playerToken,
               socketId: socket.id,
               nickname: cleanNick,
-              avatar: getRandomAvatar(),
+              avatar: avatar || getRandomAvatar(),
               isHost: room.players.size === 0,
               lives: isSpectator ? 0 : 3,
               status: isSpectator ? 'ELIMINATED' : 'ALIVE',
@@ -224,6 +215,94 @@ export function setupSocketHandlers(io: Server): void {
       if (!room) return;
 
       resetRoom(room, playerToken, io);
+    });
+
+    // 5.5 REALTIME ROOM CHAT
+    socket.on('send_chat_message', (data: { roomId: string; nickname: string; avatar: string; text: string; isHost?: boolean }) => {
+      const { roomId, nickname, avatar, text, isHost } = data;
+      if (!roomId || !text || !text.trim()) return;
+      const cleanText = text.trim().slice(0, 200);
+      io.to(roomId).emit('new_chat_message', {
+        id: Math.random().toString(36).substring(2, 9),
+        senderName: nickname || 'Ẩn danh',
+        avatar: avatar || '🐱',
+        text: cleanText,
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        isHost: !!isHost,
+      });
+    });
+
+    // 5.6 UPDATE PLAYER (Avatar / Nickname customization)
+    socket.on('update_player', (data: { roomId: string; playerToken: string; nickname?: string; avatar?: string }) => {
+      const { roomId, playerToken, nickname, avatar } = data;
+      if (!roomId || !playerToken) return;
+
+      const cleanRoomId = roomId.trim().toUpperCase();
+      const room = roomStore.getRoom(cleanRoomId);
+      if (!room) return;
+
+      if (roomStore.updatePlayerProfile(room, playerToken, { nickname, avatar })) {
+        io.to(cleanRoomId).emit('room_state_sync', roomStore.toPublicRoomState(room));
+      }
+    });
+
+    // 5.7 UPDATE ROOM SETTINGS (Gameplay / sound toggles)
+    socket.on('update_room_settings', (data: { roomId: string; playerToken: string; settings: any }) => {
+      const { roomId, playerToken, settings } = data;
+      if (!roomId || !playerToken) return;
+
+      const cleanRoomId = roomId.trim().toUpperCase();
+      const room = roomStore.getRoom(cleanRoomId);
+      if (!room) return;
+
+      const player = room.players.get(playerToken);
+      if (!player || !player.isHost) return;
+
+      io.to(cleanRoomId).emit('room_settings_sync', settings);
+    });
+
+    // 5.8 ADD BOT (Chế độ thử nghiệm test game)
+    socket.on('add_bot', (data: { roomId: string; playerToken: string; count?: number }) => {
+      const { roomId, playerToken, count = 1 } = data;
+      const cleanRoomId = roomId?.trim().toUpperCase();
+      const room = roomStore.getRoom(cleanRoomId);
+      if (!room) return;
+
+      const host = room.players.get(playerToken);
+      if (!host || !host.isHost) return;
+
+      if (roomStore.addBots(room, count) > 0) {
+        io.to(cleanRoomId).emit('room_state_sync', roomStore.toPublicRoomState(room));
+      }
+    });
+
+    // 5.9 REMOVE SINGLE BOT
+    socket.on('remove_bot', (data: { roomId: string; playerToken: string; botToken: string }) => {
+      const { roomId, playerToken, botToken } = data;
+      const cleanRoomId = roomId?.trim().toUpperCase();
+      const room = roomStore.getRoom(cleanRoomId);
+      if (!room) return;
+
+      const host = room.players.get(playerToken);
+      if (!host || !host.isHost) return;
+
+      if (roomStore.removeBot(room, botToken)) {
+        io.to(cleanRoomId).emit('room_state_sync', roomStore.toPublicRoomState(room));
+      }
+    });
+
+    // 5.10 CLEAR ALL BOTS
+    socket.on('clear_bots', (data: { roomId: string; playerToken: string }) => {
+      const { roomId, playerToken } = data;
+      const cleanRoomId = roomId?.trim().toUpperCase();
+      const room = roomStore.getRoom(cleanRoomId);
+      if (!room) return;
+
+      const host = room.players.get(playerToken);
+      if (!host || !host.isHost) return;
+
+      roomStore.clearBots(room);
+      io.to(cleanRoomId).emit('room_state_sync', roomStore.toPublicRoomState(room));
     });
 
     // 6. DISCONNECT

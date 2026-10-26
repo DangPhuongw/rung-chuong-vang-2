@@ -4,6 +4,7 @@ import { PublicRoomState, PublicPlayer } from '../types/game';
 interface GameState {
   playerToken: string;
   nickname: string;
+  avatar: string;
   roomState: PublicRoomState | null;
   selectedAnswer: number | null;
   hasSubmitted: boolean;
@@ -24,6 +25,7 @@ interface GameState {
   } | null;
   initPlayer: () => void;
   setNickname: (nick: string) => void;
+  setAvatar: (avatar: string) => void;
   setRoomState: (state: PublicRoomState | null) => void;
   setSelectedAnswer: (index: number) => void;
   setRoundResult: (result: any) => void;
@@ -46,6 +48,7 @@ function getOrCreatePlayerToken(): string {
 export const useGameStore = create<GameState>((set) => ({
   playerToken: '',
   nickname: '',
+  avatar: 'char_burger',
   roomState: null,
   selectedAnswer: null,
   hasSubmitted: false,
@@ -58,7 +61,8 @@ export const useGameStore = create<GameState>((set) => ({
     if (typeof window !== 'undefined') {
       const token = getOrCreatePlayerToken();
       const savedNick = localStorage.getItem('player_nickname') || '';
-      set({ playerToken: token, nickname: savedNick });
+      const savedAvatar = localStorage.getItem('player_avatar') || 'char_burger';
+      set({ playerToken: token, nickname: savedNick, avatar: savedAvatar });
     }
   },
 
@@ -67,6 +71,13 @@ export const useGameStore = create<GameState>((set) => ({
       localStorage.setItem('player_nickname', nickname);
     }
     set({ nickname });
+  },
+
+  setAvatar: (avatar: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('player_avatar', avatar);
+    }
+    set({ avatar });
   },
 
   setRoomState: (roomState) => set({ roomState }),

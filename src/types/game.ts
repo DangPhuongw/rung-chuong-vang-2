@@ -38,6 +38,7 @@ export interface Player {
   currentAnswerIndex: number | null; // Đáp án đã chọn ở câu hiện tại
   answerTimeMs: number | null;       // Thời gian trả lời câu hiện tại
   eliminatedAtRound: number | null;  // Vòng bị loại để xếp hạng
+  isBot?: boolean;      // Đánh dấu người chơi máy (để test tính năng)
 }
 
 export interface PublicPlayer {
@@ -50,6 +51,7 @@ export interface PublicPlayer {
   score: number;
   hasAnswered: boolean;
   eliminatedAtRound: number | null;
+  isBot?: boolean;      // Đánh dấu người chơi máy
 }
 
 export interface Room {
@@ -66,6 +68,7 @@ export interface Room {
   currentQuestion: QuestionData | null;
   questionStartTime: number;
   timerInterval: NodeJS.Timeout | null;
+  botTimers?: NodeJS.Timeout[]; // Timers trả lời của bot
   players: Map<string, Player>; // Key là playerToken
   winner: Player | null;
   tieBreakReason?: 'ALL_DIED_REVIVE' | 'TOP_3_SURVIVORS' | 'MAIN_QUESTIONS_EXHAUSTED' | null;

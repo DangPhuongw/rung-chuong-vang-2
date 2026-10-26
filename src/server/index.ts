@@ -2,13 +2,16 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import next from 'next';
+import path from 'path';
+import { parse } from 'url';
 import { setupSocketHandlers } from './socketHandler';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
 const port = parseInt(process.env.PORT || '3000', 10);
+const dir = path.resolve(__dirname, '../../');
 
-const app = next({ dev, hostname, port });
+const app = next({ dev, hostname, port, dir });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
@@ -26,7 +29,8 @@ app.prepare().then(() => {
 
   // Let Next.js handle all requests including App Router API routes
   server.all('*', (req, res) => {
-    return handle(req, res);
+    const parsedUrl = parse(req.url, true);
+    return handle(req, res, parsedUrl);
   });
 
   httpServer.listen(port, () => {

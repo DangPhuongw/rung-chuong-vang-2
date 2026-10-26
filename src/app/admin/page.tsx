@@ -11,11 +11,12 @@ import {
   Trash2,
   Eye,
   ArrowLeft,
-  Filter,
   Loader2,
   Clock,
-  Flame,
+  Crown,
   Check,
+  X,
+  ListFilter,
 } from 'lucide-react';
 
 interface AdminQuizItem {
@@ -140,34 +141,36 @@ export default function AdminPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-5">
         <div>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white mb-2 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-muted hover:text-ink mb-2 transition-colors group"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
             <span>Về trang chủ</span>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
-            <Shield className="w-7 h-7 text-amber-400" />
-            <span>Bảng Điều Khiển Quản Trị (Admin Panel)</span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-ink flex items-center gap-3">
+            <span className="w-10 h-10 rounded-full bg-paper-2 border border-rule flex items-center justify-center text-accent-deep shadow-sm">
+              <Crown className="w-5 h-5 text-accent-deep" />
+            </span>
+            <span>Bảng Điều Khiển Quản Trị</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm font-medium text-muted mt-1">
             Phê duyệt, từ chối và quản lý toàn bộ các bộ câu hỏi trên hệ thống
           </p>
         </div>
 
         {/* Filter buttons */}
-        <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+        <div className="flex items-center gap-1.5 bg-paper-2 p-1.5 rounded-full border border-rule">
           {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
                 statusFilter === status
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-accent text-accent-ink shadow-sm'
+                  : 'text-muted hover:text-ink'
               }`}
             >
               {status === 'ALL'
@@ -184,19 +187,19 @@ export default function AdminPage() {
 
       {/* Quizzes Table / List */}
       {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-          <span className="text-sm">Đang tải danh sách bộ câu hỏi...</span>
+        <div className="py-20 flex flex-col items-center justify-center text-muted gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-accent-deep" />
+          <span className="text-sm font-bold">Đang tải danh sách bộ câu hỏi…</span>
         </div>
       ) : quizzes.length === 0 ? (
-        <div className="py-16 text-center glass-panel rounded-2xl">
-          <p className="text-slate-400 font-bold mb-1">Không có bộ câu hỏi nào phù hợp với bộ lọc!</p>
+        <div className="py-16 text-center soft-card">
+          <p className="text-muted font-bold mb-1">Không có bộ câu hỏi nào phù hợp với bộ lọc!</p>
         </div>
       ) : (
-        <div className="rounded-2xl glass-panel overflow-hidden border-slate-800">
+        <div className="soft-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <table className="w-full text-left text-sm text-ink">
+              <thead className="bg-paper-2 text-xs text-muted border-b border-rule font-bold">
                 <tr>
                   <th className="py-4 px-6 font-bold">Bộ câu hỏi</th>
                   <th className="py-4 px-6 font-bold">Tác giả</th>
@@ -205,36 +208,36 @@ export default function AdminPage() {
                   <th className="py-4 px-6 font-bold text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-rule">
                 {quizzes.map((quiz) => (
-                  <tr key={quiz.id} className="hover:bg-slate-900/40 transition-colors">
+                  <tr key={quiz.id} className="hover:bg-paper-2/60 transition-colors">
                     <td className="py-4 px-6">
-                      <div className="font-bold text-white text-sm">{quiz.title}</div>
-                      <div className="text-xs text-slate-400 line-clamp-1">{quiz.description}</div>
+                      <div className="font-extrabold text-ink text-sm">{quiz.title}</div>
+                      <div className="text-xs font-medium text-muted line-clamp-1">{quiz.description}</div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="font-mono text-xs text-indigo-300">
+                      <span className="text-xs font-bold text-accent-deep bg-paper-2 border border-rule px-2 py-0.5 rounded-lg">
                         {quiz.author?.username || 'Hệ thống'}
                       </span>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-1.5 text-xs">
-                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                        <span className="px-2 py-0.5 rounded-lg bg-paper-2 text-ink border border-rule font-bold">
                           {quiz.mainCount} Main
                         </span>
-                        <span className="px-2 py-0.5 rounded bg-rose-950/40 text-rose-300 border border-rose-900/40">
+                        <span className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 font-bold">
                           {quiz.tieBreakCount} Tie-Break
                         </span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <span
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase border ${
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
                           quiz.status === 'APPROVED'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                             : quiz.status === 'REJECTED'
-                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                            : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                            ? 'bg-rose-50 text-rose-800 border-rose-300'
+                            : 'bg-amber-50 text-amber-800 border-amber-300'
                         }`}
                       >
                         {quiz.status === 'APPROVED'
@@ -250,7 +253,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => handleOpenPreview(quiz.id)}
                           title="Xem trước nội dung"
-                          className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                          className="p-2 rounded-xl bg-paper-2 hover:bg-paper-3 text-muted hover:text-ink border border-rule transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -260,7 +263,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => handleUpdateStatus(quiz.id, 'APPROVED')}
                             title="Duyệt bộ này"
-                            className="p-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 transition-colors"
+                            className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors"
                           >
                             <CheckCircle className="w-4 h-4" />
                           </button>
@@ -271,7 +274,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => handleUpdateStatus(quiz.id, 'REJECTED')}
                             title="Từ chối bộ này"
-                            className="p-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 transition-colors"
+                            className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors"
                           >
                             <XCircle className="w-4 h-4" />
                           </button>
@@ -281,7 +284,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => handleDelete(quiz.id)}
                           title="Xóa vĩnh viễn"
-                          className="p-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 transition-colors"
+                          className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -297,43 +300,45 @@ export default function AdminPage() {
 
       {/* PREVIEW MODAL */}
       {previewQuiz && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-3xl my-8 rounded-2xl glass-panel-glow p-6 sm:p-8 relative border-slate-700 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-3xl my-8 rounded-3xl bg-card p-6 sm:p-8 relative border border-rule shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-rule pb-4 mb-6">
               <div>
-                <h3 className="text-xl font-black text-white">{previewQuiz.title}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{previewQuiz.description}</p>
+                <h3 className="text-xl font-extrabold text-ink">{previewQuiz.title}</h3>
+                <p className="text-xs font-medium text-muted mt-0.5">{previewQuiz.description}</p>
               </div>
               <button
                 onClick={() => setPreviewQuiz(null)}
-                className="text-slate-400 hover:text-white font-bold text-lg px-2"
+                className="w-8 h-8 rounded-full bg-paper-2 hover:bg-paper-3 text-muted hover:text-ink font-bold flex items-center justify-center transition-colors"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Questions preview */}
             <div className="space-y-6">
-              <h4 className="text-sm font-bold text-indigo-400 uppercase tracking-wider">
-                Danh Sách Câu Hỏi ({previewQuiz.questions?.length} câu)
+              <h4 className="text-xs font-bold text-accent-deep flex items-center gap-1.5">
+                <ListFilter className="w-4 h-4" />
+                <span>Danh Sách Câu Hỏi ({previewQuiz.questions?.length} câu)</span>
               </h4>
 
               <div className="space-y-4">
                 {previewQuiz.questions?.map((q: any, idx: number) => (
                   <div
                     key={q.id || idx}
-                    className={`p-4 rounded-xl border ${
+                    className={`p-4 rounded-2xl border ${
                       q.category === 'TIE_BREAK'
-                        ? 'bg-rose-950/20 border-rose-900/50'
-                        : 'bg-slate-900/60 border-slate-800'
+                        ? 'bg-rose-50/70 border-rose-200'
+                        : 'bg-paper-2/60 border-rule'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-xs text-white">
+                      <span className="font-extrabold text-xs text-ink">
                         #{idx + 1}. [{q.category}] {q.content}
                       </span>
-                      <span className="text-[11px] text-amber-400 font-mono">
-                        {q.timeLimit}s
+                      <span className="text-[11px] font-bold text-accent-deep bg-paper-2 px-2 py-0.5 rounded-lg border border-rule flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{q.timeLimit}s</span>
                       </span>
                     </div>
 
@@ -343,16 +348,16 @@ export default function AdminPage() {
                         return (
                           <div
                             key={optIdx}
-                            className={`px-3 py-1.5 rounded-lg text-xs flex items-center justify-between border ${
+                            className={`px-3 py-2 rounded-xl text-xs flex items-center justify-between ${
                               isCorrect
-                                ? 'bg-emerald-950/50 border-emerald-500 text-emerald-300 font-bold'
-                                : 'bg-slate-900 border-slate-800 text-slate-400'
+                                ? 'bg-emerald-100 text-emerald-950 font-extrabold'
+                                : 'bg-paper-2 text-ink font-semibold'
                             }`}
                           >
                             <span>
                               {String.fromCharCode(65 + optIdx)}. {opt}
                             </span>
-                            {isCorrect && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                            {isCorrect && <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />}
                           </div>
                         );
                       })}
@@ -363,11 +368,11 @@ export default function AdminPage() {
             </div>
 
             {/* Actions footer */}
-            <div className="mt-8 pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+            <div className="mt-8 pt-4 border-t border-rule flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setPreviewQuiz(null)}
-                className="py-2.5 px-4 rounded-xl text-xs font-bold text-slate-300 bg-slate-800 hover:bg-slate-700"
+                className="pill-btn-secondary py-2.5 px-4 text-xs font-bold"
               >
                 Đóng
               </button>
@@ -375,7 +380,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => handleUpdateStatus(previewQuiz.id, 'APPROVED')}
-                  className="py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md"
+                  className="pill-btn-primary py-2.5 px-5 text-xs font-bold text-accent-ink"
                 >
                   Duyệt Bộ Này
                 </button>

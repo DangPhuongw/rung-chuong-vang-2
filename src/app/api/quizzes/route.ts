@@ -123,7 +123,11 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (!Array.isArray(q.options) || q.options.length !== 4) {
+      const optsArray = Array.isArray(q.options)
+        ? q.options
+        : (q.options && Array.isArray(q.options.options) ? q.options.options : null);
+
+      if (!optsArray || optsArray.length !== 4) {
         return NextResponse.json(
           { error: `Câu hỏi "${q.content.slice(0, 20)}..." phải có đủ 4 đáp án!` },
           { status: 400 }
@@ -150,7 +154,7 @@ export async function POST(req: NextRequest) {
           create: questions.map((q: any, idx: number) => ({
             category: q.category === 'TIE_BREAK' ? 'TIE_BREAK' : 'MAIN',
             content: q.content.trim(),
-            options: JSON.stringify(q.options.map((opt: string) => opt.trim())),
+            options: typeof q.options === 'string' ? q.options : JSON.stringify(q.options),
             correctIndex: q.correctIndex,
             timeLimit: Number(q.timeLimit) || 15,
             orderIndex: idx + 1,
